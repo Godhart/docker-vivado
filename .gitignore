@@ -1,0 +1,7 @@
+Distribs
+.dockerignore
+install_config.txt
+wi_authentication_key
+mount_all.sh
+*.tar
+*.gz
