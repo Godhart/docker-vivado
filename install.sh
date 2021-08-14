@@ -1,10 +1,17 @@
 #!/bin/bash
 
-VIVADO_BIN=Xilinx_Unified_2020.1_0602_1208_Lin64.bin
+echo "*" > .dockerignore
+echo "!wi_authentication_key" >> .dockerignore
+echo "!install_config.txt" >> .dockerignore
 
-chmod +x $VIVADO_BIN
+docker build -t "vivado-install" \
+-f Dockerfile.vivado_install \
+--build-arg USER_ID=$(id -u) .
 
+echo "*" > .dockerignore
 docker build -t "vivado" \
 -f Dockerfile.vivado \
---build-arg USER_ID=$(id -u) \
---build-arg VIVADO_BIN=$VIVADO_BIN .
+--build-arg USER_ID=$(id -u) .
+
+# TODO: export as single image
+
