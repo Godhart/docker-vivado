@@ -1,3 +1,7 @@
+# NOTE: I've used as guidelines for Makefile following pages:
+# * https://dev.to/flpslv/using-makefiles-to-build-and-publish-docker-containers-7c8
+# * https://jmkhael.io/makefiles-for-your-dockerfiles/
+
 #Import environment
 env = default
 include make_env-$(env)
