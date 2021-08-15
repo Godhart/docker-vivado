@@ -30,7 +30,7 @@ IMAGEFULLNAME=$(REPO)/$(IMAGENAME)-$(suffix):$(version)
 DISTR_DATA=  $(distr_data)
 WORKSPACE =  $(workspace)
 
-PWD = $(shell pwd)
+IMPORT_PATH = $(WORKSPACE)/$(WORKSPACE).tar 
 
 .PHONY: debug help distr conf install image all tar import prune clean clean_all version test_sim test_synth simulate bitstream gui check_conf
 
@@ -91,6 +91,7 @@ help:
 	@echo "version      - Print installed software version"
 	@echo "test_sim     - Test simulation"
 	@echo "test_synth   - Test synthesis"
+	@echo "test_clean   - Clean tests data"
 	@echo "simulate     - Do simulation"
 	@echo "bitstream    - Make bitstream"
 
@@ -131,8 +132,8 @@ check_conf: $(WORKSPACE)/install_config.txt
 
 install: Dockerfile.$(target)-install check_conf
 
-	echo "*" > .dockerignore
-	echo "!$(WORKSPACE)/install_config.txt" >> .dockerignore
+	@echo "*" > .dockerignore
+	@echo "!$(WORKSPACE)/install_config.txt" >> .dockerignore
 
 	docker build -t $(INSTALLFULLNAME) -f Dockerfile.$(target)-install \
 	--build-arg BASE=$(DISTRFULLNAME) \
@@ -141,7 +142,7 @@ install: Dockerfile.$(target)-install check_conf
 
 image: install Dockerfile.$(target)
 
-	echo "*" > .dockerignore
+	@echo "*" > .dockerignore
 	docker build -t "$(IMAGEFULLNAME)" -f Dockerfile.$(target) \
 	--build-arg BASE=$(INSTALLFULLNAME) \
 	--build-arg USER_ID=$(user_id) \
@@ -157,6 +158,7 @@ tar: image
 	docker container rm --force $(target)-export
 
 import:
+	docker import $(IMPORT_PATH) "$(IMAGEFULLNAME)"
 
 prune:
 	docker rmi $(IMAGEFULLNAME)
@@ -171,10 +173,16 @@ clean_all: clean
 	rm -f $(WORKSPACE)/$(WORKSPACE).tar
 
 version:
+	cd examples/version && make IMAGE="$(IMAGEFULLNAME)"
 
 test_sim:
+	cd examples/sim && make IMAGE="$(IMAGEFULLNAME)"
 
 test_synth:
+	cd examples/synth && make IMAGE="$(IMAGEFULLNAME)"
+
+test_clean:
+	cd examples/synth && make clean IMAGE="$(IMAGEFULLNAME)"
 
 simulate:
 
