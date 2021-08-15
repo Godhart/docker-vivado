@@ -7,7 +7,6 @@ ENV USERNAME=vivado
 ENV XILINX_HOME=/root/.Xilinx
 
 COPY install_config.txt ${XILINX_HOME}
-# COPY wi_authentication_key ${XILINX_HOME}
 
 RUN apt-get update --fix-missing && apt-get install -y libx11-6
 

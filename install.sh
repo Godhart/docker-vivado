@@ -1,11 +1,10 @@
 #!/bin/bash
 
 echo "*" > .dockerignore
-echo "!wi_authentication_key" >> .dockerignore
 echo "!install_config.txt" >> .dockerignore
 
 docker build -t "vivado-install" \
--f Dockerfile.vivado_install \
+-f Dockerfile.vivado-install \
 --build-arg USER_ID=$(id -u) .
 
 echo "*" > .dockerignore

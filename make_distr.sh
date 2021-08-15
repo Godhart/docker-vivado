@@ -7,6 +7,6 @@ echo "!$VIVADO_BIN" >> .dockerignore
 echo "!$VIVADO_BIN/**/*" >> .dockerignore
 
 docker build -t "vivado-distr" \
--f Dockerfile.vivado_distr \
+-f Dockerfile.vivado-distr \
 --build-arg VIVADO_BIN=$VIVADO_BIN .
 
