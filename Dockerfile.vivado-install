@@ -1,14 +1,8 @@
 # syntax=docker/dockerfile:1
-FROM vivado-distr
+ARG BASE
+FROM ${BASE}
+ARG WOKRKSPACE
 
-ARG USER_ID
+COPY ${WOKRKSPACE}/install_config.txt ${XILINX_HOME}
 
-ENV USERNAME=vivado
-ENV XILINX_HOME=/root/.Xilinx
-
-COPY install_config.txt ${XILINX_HOME}
-
-RUN apt-get update --fix-missing && apt-get install -y libx11-6
-
-RUN /tmp/wi/xsetup -b Install -a XilinxEULA,3rdPartyEULA,WebTalkTerms -c ${XILINX_HOME}/install_config.txt
-
+RUN ${DISTR_TMP}/xsetup -b Install -a XilinxEULA,3rdPartyEULA,WebTalkTerms -c ${XILINX_HOME}/install_config.txt

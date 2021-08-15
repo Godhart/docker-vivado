@@ -1,14 +1,15 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:18.04
-
-ARG VIVADO_BIN
-
-RUN apt-get update --fix-missing && apt-get install -y libx11-6
+ARG BASE
+FROM ${BASE}
+ARG BASE_LIBS
+ARG DISTR_DATA
 
 ENV XILINX_HOME=/root/.Xilinx
-
 RUN mkdir -p ${XILINX_HOME}
 
-RUN mkdir tmp/wi
-COPY ${VIVADO_BIN}/ /tmp/wi/
+ENV DISTR_TMP=tmp/wi
+RUN mkdir -p ${DISTR_TMP}
 
+COPY ${DISTR_DATA}/ ${DISTR_TMP}/
+
+RUN apt-get update --fix-missing && apt-get install -y ${BASE_LIBS}

@@ -1,0 +1,7 @@
+target    = vivado
+version   = 2020.1
+base      = ubuntu
+base_ver  = 18.04
+base_libs = "libx11-6"
+add_apps  = "git"
+distr_data= Distribs/Xilinx_Unified_2020.1_0602_1208
