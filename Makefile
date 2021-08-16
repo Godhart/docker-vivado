@@ -3,20 +3,24 @@
 # * https://jmkhael.io/makefiles-for-your-dockerfiles/
 
 #Import environment
-env = default
+$(shell test ! -e default_env && echo "" > default_env)
+include default_env
+env       ?= default
+
+$(shell test ! -e make_env-$(env) && echo "" > make_env-$(env))
 include make_env-$(env)
 
 #Dockerfile vars
 target    ?= vivado
 version   ?= 2020.1
-suffix    ?= $(env)
+suffix    ?= -$(env)
 base      ?= ubuntu
 base_ver  ?= 18.04
 distr_libs?= "libx11-6"
 add_apps  ?= ""
 # NOTE: Borrowed GUI libs list from https://github.com/phwl/docker-vivado for add_apps in make_env-default
 distr_data?= Distribs/Xilinx_Unified_2020.1_0602_1208
-workspace = $(target)-$(version)-$(suffix)
+workspace = $(target)-$(version)$(suffix)
 user_id   = $(shell id -u)
 
 #Make vars
@@ -24,16 +28,20 @@ IMAGENAME =  $(target)
 REPO      =  godhart
 
 DISTRFULLNAME=$(REPO)/$(IMAGENAME)-distr-$(base)-$(base_ver):$(version)
-CONFFULLNAME=$(REPO)/$(IMAGENAME)-$(suffix)-conf:$(version)
-INSTALLFULLNAME=$(REPO)/$(IMAGENAME)-$(suffix)-install:$(version)
-IMAGEFULLNAME=$(REPO)/$(IMAGENAME)-$(suffix):$(version)
+CONFFULLNAME=$(REPO)/$(IMAGENAME)$(suffix)-conf:$(version)
+INSTALLFULLNAME=$(REPO)/$(IMAGENAME)$(suffix)-install:$(version)
+IMAGEFULLNAME=$(REPO)/$(IMAGENAME)$(suffix):$(version)
 
 DISTR_DATA=  $(distr_data)
 WORKSPACE =  $(workspace)
 
 IMPORT_PATH = $(WORKSPACE)/$(WORKSPACE).tar 
 
-.PHONY: debug help distr conf install image all tar import prune clean clean_all version test_sim test_synth simulate bitstream bash tcl gui check_conf check_license
+.PHONY: debug help distr conf install image all tar import prune clean clean_all \
+	default_env \
+	version test_sim test_synth simulate bitstream \
+	bash tcl gui \
+	check_conf check_license
 
 .DEFAULT_GOAL := image
 
@@ -64,9 +72,12 @@ debug:
 	@echo "PWD             = $(PWD)"
 
 help:
+	@echo "Run with 'make <target> [argument1=<value1>] [argument2=<value2>] ...'"
 	@echo "Makefile arguments:"
 	@echo ""
 	@echo "env          - Make Environment Suffix Name"
+	@echo ""
+	@echo "Overriding make enironment (consider making new make_env for long term):"
 	@echo "-e target    - Override Target Software Name"
 	@echo "-e version   - Override Target Software Version"
 	@echo "-e suffix    - Override Image Suffix Name"
@@ -76,14 +87,15 @@ help:
 	@echo "-e distr_data- Override Distributive Location"
 	@echo "-e add_apps  - Override Additional Apps List after installation"
 	@echo ""
-	@echo "Makefile commands:"
-	@echo "debug"       - Debug make - print variables
+	@echo "Makefile targets:"
+	@echi "default_env  - Set default environment for following makes"
+	@echo "debug        - Debug make itself - print actual variables values"
 	@echo "distr        - Prepare distr image with distributive data"
 	@echo " -- NOTE: conf,install,image,tar depends on distr image but won't make it"
 	@echo "conf         - Prepare configuration file for installation"
-	@echo "install      - Make installation image"
+	@echo "install      - Make image with taret software installed"
 	@echo "image        - Make final image with all additional apps and user setup"
-	@echo "all          - Make distr and then final image"
+	@echo "all          - Make distr, conf and then final image"
 	@echo "tar          - Export final image into tar to share with others"
 	@echo "import       - Imports tar as final image"
 	@echo "prune        - Remove all docker images"
@@ -94,10 +106,12 @@ help:
 	@echo "test_sim     - Test simulation"
 	@echo "test_synth   - Test synthesis"
 	@echo "test_clean   - Clean tests data"
-	@echo "simulate     - Do simulation"
-	@echo "bitstream    - Make bitstream"
+	@echo "simulate     - Do simulation (not yet)"
+	@echo "bitstream    - Make bitstream (not yet)"
 
 # TODO: download distr data
+default_env:
+	@echo "env=$(env)" > default_env
 
 distr: Dockerfile.$(target)-distr $(DISTR_DATA)
 	@echo "*" > .dockerignore
@@ -171,11 +185,12 @@ tar: image
 
 import:
 	docker import $(IMPORT_PATH) "$(IMAGEFULLNAME)"
+	rm -f $(WORKSPACE)/$(WORKSPACE).tar	
 
 prune:
 	docker rmi $(IMAGEFULLNAME)
 	docker rmi $(INSTALLFULLNAME)
-	docker rmi $(CONFFULLNAME)
+	docker rmi $(CONFFULLNAME) || echo "No conf image found for failed to prune it...skipping"
 	docker rmi $(DISTRFULLNAME)
 
 clean: prune
