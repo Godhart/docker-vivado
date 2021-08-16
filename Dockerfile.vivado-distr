@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 ARG BASE
 FROM ${BASE}
-ARG BASE_LIBS
+ARG DISTR_LIBS
 ARG DISTR_DATA
 
 ENV XILINX_HOME=/root/.Xilinx
@@ -12,4 +12,9 @@ RUN mkdir -p ${DISTR_TMP}
 
 COPY ${DISTR_DATA}/ ${DISTR_TMP}/
 
-RUN apt-get update --fix-missing && apt-get install -y ${BASE_LIBS}
+RUN apt-get update --fix-missing -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
+    ${DISTR_LIBS} \
+    && apt-get autoclean \
+    && apt-get autoremove \
+    && rm -rf /var/lib/apt/lists/*

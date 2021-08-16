@@ -2,7 +2,11 @@
 ARG BASE
 FROM ${BASE}
 ARG WOKRKSPACE
+ARG VIVADO_VERSION
 
-COPY ${WOKRKSPACE}/install_config.txt ${XILINX_HOME}
+COPY ${WOKRKSPACE}/install_config.txt ${XILINX_HOME}/
 
 RUN ${DISTR_TMP}/xsetup -b Install -a XilinxEULA,3rdPartyEULA,WebTalkTerms -c ${XILINX_HOME}/install_config.txt
+
+# NOTE: /tools/Xilinx path is set within install_config.txt, don't change it
+ENV VIVADO_DIR=/tools/Xilinx/Vivado/${VIVADO_VERSION}

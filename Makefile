@@ -12,8 +12,9 @@ version   ?= 2020.1
 suffix    ?= $(env)
 base      ?= ubuntu
 base_ver  ?= 18.04
-base_libs ?= "libx11-6"
-add_apps  ?= "git"
+distr_libs?= "libx11-6"
+add_apps  ?= ""
+# NOTE: Borrowed GUI libs list from https://github.com/phwl/docker-vivado for add_apps in make_env-default
 distr_data?= Distribs/Xilinx_Unified_2020.1_0602_1208
 workspace = $(target)-$(version)-$(suffix)
 user_id   = $(shell id -u)
@@ -32,7 +33,7 @@ WORKSPACE =  $(workspace)
 
 IMPORT_PATH = $(WORKSPACE)/$(WORKSPACE).tar 
 
-.PHONY: debug help distr conf install image all tar import prune clean clean_all version test_sim test_synth simulate bitstream gui check_conf
+.PHONY: debug help distr conf install image all tar import prune clean clean_all version test_sim test_synth simulate bitstream bash tcl gui check_conf check_license
 
 .DEFAULT_GOAL := image
 
@@ -46,7 +47,7 @@ debug:
 	@echo "suffix          = $(suffix)"
 	@echo "base            = $(base)"
 	@echo "base_ver        = $(base_ver)"
-	@echo "base_libs       = $(base_libs)"
+	@echo "distr_libs      = $(distr_libs)"
 	@echo "add_apps        = $(add_apps)"
 	@echo "distr_data      = $(distr_data)"
 	@echo "workspace       = $(workspace)"
@@ -71,8 +72,9 @@ help:
 	@echo "-e suffix    - Override Image Suffix Name"
 	@echo "-e base      - Override Base Image"
 	@echo "-e base_ver  - Override Base Image Version"
-	@echo "-e base_libs - Override Required libs list before installation"
-	@echo "-e add_apps  - Override Additional apps list after installation"
+	@echo "-e distr_libs- Override Required Libs List before installation"
+	@echo "-e distr_data- Override Distributive Location"
+	@echo "-e add_apps  - Override Additional Apps List after installation"
 	@echo ""
 	@echo "Makefile commands:"
 	@echo "debug"       - Debug make - print variables
@@ -102,10 +104,10 @@ distr: Dockerfile.$(target)-distr $(DISTR_DATA)
 	@echo "!$(DISTR_DATA)" >> .dockerignore
 	@echo "!$(DISTR_DATA)/**/*" >> .dockerignore
 
-	docker build -t "$(DISTRFULLNAME)" -f Dockerfile.$(target)-distr \
+	docker build -t $(DISTRFULLNAME) -f Dockerfile.$(target)-distr \
 	--build-arg BASE="$(base):$(base_ver)" \
-	--build-arg BASE_LIBS=$(base_libs) \
-	--build-arg DISTR_DATA=$(distr_data) \
+	--build-arg DISTR_LIBS="$(distr_libs)" \
+	--build-arg DISTR_DATA="$(distr_data)" \
 	.
 
 conf: Dockerfile.$(target)-conf config.sh
@@ -124,7 +126,7 @@ conf: Dockerfile.$(target)-conf config.sh
 	docker run --rm -i -t -v "$(PWD)/$(WORKSPACE)":/home/$(target)/workspace "$(CONFFULLNAME)" /bin/bash /tmp/config.sh
 
 $(WORKSPACE)/install_config.txt:
-	@echo $(shell test ! -e $(WORKSPACE)/install_config.txt && echo -n "run 'make conf ...'")
+	@echo $(shell test ! -e $(WORKSPACE)/install_config.txt && echo -n "run 'make conf ...' or put 'install_config.txt' into '$(WORKSPACE)'")
 	CONF = $(shell test -e $(WORKSPACE)/install_config.txt)
 
 check_conf: $(WORKSPACE)/install_config.txt
@@ -138,15 +140,25 @@ install: Dockerfile.$(target)-install check_conf
 	docker build -t $(INSTALLFULLNAME) -f Dockerfile.$(target)-install \
 	--build-arg BASE=$(DISTRFULLNAME) \
 	--build-arg WOKRKSPACE=$(workspace) \
+	--build-arg VIVADO_VERSION=$(version) \
 	.
 
-image: install Dockerfile.$(target)
+$(WORKSPACE)/Xilinx.lic:
+#	@echo $(shell test ! -e $(WORKSPACE)/Xilinx.lic && echo -n "put 'Xilinx.lic' into '$(WORKSPACE)'")
+#	LICENSE = $(shell test -e $(WORKSPACE)/Xilinx.lic)
+
+check_license: $(WORKSPACE)/Xilinx.lic
+#	@echo "license file is at place"
+
+image: install Dockerfile.$(target) check_license
 
 	@echo "*" > .dockerignore
-	docker build -t "$(IMAGEFULLNAME)" -f Dockerfile.$(target) \
+	@echo "!$(WORKSPACE)/Xilinx.lic" >> .dockerignore
+
+	docker build -t $(IMAGEFULLNAME) -f Dockerfile.$(target) \
 	--build-arg BASE=$(INSTALLFULLNAME) \
 	--build-arg USER_ID=$(user_id) \
-	--build-arg ADD_APPS=$(add_apps) \
+	--build-arg ADD_APPS="$(add_apps)" \
 	.
 
 tar: image
@@ -188,4 +200,22 @@ simulate:
 
 bitstream:
 
+bash:
+	docker run -it --rm \
+	-v "$(PWD)/$(WORKSPACE)":/home/$(target)/workspace \
+	$(IMAGEFULLNAME) \
+	/bin/bash --login
+
+tcl:
+	docker run -it --rm \
+	-v "$(PWD)/$(WORKSPACE)":/home/$(target)/workspace \
+	$(IMAGEFULLNAME) \
+	/bin/bash --login -c "source /tools/Xilinx/Vivado/$(version)/settings64.sh && vivado -mode tcl"
+
 gui:
+	docker run --env=DISPLAY --rm \
+	-v "$(PWD)/$(WORKSPACE)":/home/$(target)/workspace \
+	-v /root/.Xauthority:/root/.Xauthority \
+	--net=host \
+	$(IMAGEFULLNAME) \
+	/bin/bash --login -c "source /tools/Xilinx/Vivado/$(version)/settings64.sh && vivado"

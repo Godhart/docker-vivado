@@ -1,7 +1,22 @@
-target    = vivado
-version   = 2020.1
-base      = ubuntu
-base_ver  = 18.04
-base_libs = "libx11-6"
-add_apps  = "git"
-distr_data= Distribs/Xilinx_Unified_2020.1_0602_1208
+target     = vivado
+version    = 2020.1
+base       = ubuntu
+base_ver   = 18.04
+
+distr_libs = libx11-6
+distr_data = Distribs/Xilinx_Unified_2020.1_0602_1208
+
+add_apps   = \
+    ca-certificates \
+    curl \
+    xorg \
+    dbus \
+    dbus-x11 \
+    ubuntu-gnome-default-settings \
+    gtk2-engines \
+    ttf-ubuntu-font-family \
+    fonts-ubuntu-font-family-console \
+    fonts-droid-fallback \
+    lxappearance \
+    git \
+

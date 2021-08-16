@@ -6,9 +6,33 @@ ARG ADD_APPS
 
 RUN rm -rf ${DISTR_TMP}
 
-RUN apt-get update --fix-missing && apt-get install -y build-essential python3 ${ADD_APPS}
-RUN ln -s /usr/bin/python3 /usr/bin/python
+# NOTE: build-essential is required for simulation
+# NOTE: python3 and alias python below are required for misc build stages of my own
+RUN apt-get update --fix-missing -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
+    build-essential \
+    python3 \
+    ${ADD_APPS} \
+    && apt-get autoclean \
+    && apt-get autoremove \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/python3 /usr/bin/python
+
+# Disabled from installation:
+#  sudo
+# && echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# copy the license file
+# COPY ${WORKSPACE}/Xilinx.lic ${XILINX_HOME}/
 
 ENV USERNAME=vivado
 RUN adduser --disabled-password --gecos '' --uid ${USER_ID} ${USERNAME}
+WORKDIR /home/${USERNAME}
 USER ${USERNAME}
+
+# add vivado tools to path
+RUN echo "source ${VIVADO_DIR}/settings64.sh" >> /home/${USERNAME}/.bashrc
+
+# copy the license file
+# RUN mkdir -p /home/${USERNAME}/.Xilinx
+# COPY ${WORKSPACE}/Xilinx.lic /home/${USERNAME}/.Xilinx/
