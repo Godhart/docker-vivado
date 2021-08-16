@@ -4,3 +4,6 @@ wi_authentication_key
 mount_all.sh
 *.tar
 *.gz
+vivado-*/**/*
+default_env
+Xilinx.lic
