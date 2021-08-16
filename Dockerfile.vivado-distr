@@ -10,7 +10,7 @@ RUN mkdir -p ${XILINX_HOME}
 ENV DISTR_TMP=tmp/wi
 RUN mkdir -p ${DISTR_TMP}
 
-COPY ${DISTR_DATA}/ ${DISTR_TMP}/
+ADD ${DISTR_DATA} ${DISTR_TMP}/
 
 RUN apt-get update --fix-missing -y \
     && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \

@@ -4,7 +4,7 @@ base       = ubuntu
 base_ver   = 18.04
 
 distr_libs = libx11-6
-distr_data = Distribs/Xilinx_Unified_2020.1_0602_1208
+distr_data = Distribs/Xilinx_Unified_2020.1_0602_1208/
 
 add_apps   = \
     ca-certificates \
